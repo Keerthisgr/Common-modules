@@ -25,29 +25,12 @@ public class UserController {
     @RequestMapping("addUser")
     public String addUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
 
-        String nameRegex = "^[A-Z][a-zA-Z]{2,49}$";
-        Pattern namePattern = Pattern.compile(nameRegex);
+        boolean isValid = userService.validateAndUser(dto, model);
 
-        if (dto.getName() == null || !namePattern.matcher(dto.getName()).matches()) {
-            model.addAttribute("error", "Invalid Name");
+        if (!isValid) {
             return "error.jsp";
         }
 
-        String phoneRegex = "^[9876]\\d{9}$";
-        Pattern phonePattern = Pattern.compile(phoneRegex);
-
-        if (dto.getPhoneNumber() == null || !phonePattern.matcher(String.valueOf(dto.getPhoneNumber())).matches()) {
-            model.addAttribute("error", "Invalid Phone Number");
-            return "error.jsp";
-        }
-
-        if (dto.getPassword() == null || dto.getConfirmPassword() == null ||
-                !dto.getPassword().equals(dto.getConfirmPassword())) {
-            model.addAttribute("error", "Password and Confirm Password must be the same.");
-            return "error.jsp";
-        }
-
-        userService.validateAndUser(dto);
         model.addAttribute("name", dto.getName());
         return "response.jsp";
     }
