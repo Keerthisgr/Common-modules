@@ -19,7 +19,7 @@
       }
 
       .form-container {
-          background: LightBlue;
+          background: rgb(180, 180, 180);
           padding: 20px;
           border-radius: 8px;
           box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -66,7 +66,7 @@
                     <a class="nav-link" href="sign-in.jsp">Sign Up</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="sign-up.jsp">Sign In</a>
+                    <a class="nav-link" href="signin.jsp">Sign In</a>
                 </li>
             </ul>
         </div>
@@ -106,8 +106,17 @@
                 </div>
                 <div class="col-md-6 form-group">
                     <label for="location">Location:</label>
-                    <input type="text" id="location" name="location" class="form-control" required>
+                    <select id="location" name="location" class="form-control" required>
+                        <option value="" disabled selected>Select Location</option>
+                        <option value="Bangalore">Bangalore</option>
+                        <option value="Shivamogga">Shivamogga</option>
+                        <option value="Mysore">Mysore</option>
+                        <option value="Hasan">Hasan</option>
+                        <option value="Ramnagara">Ramnagara</option>
+                        <option value="Chithradurga">Chithradurga</option>
+                    </select>
                 </div>
+
             </div>
 
             <div class="row">

@@ -13,6 +13,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @ToString
 @Table(name = "user_info")
+@NamedQuery(name = "getPasswordByEmail", query = "SELECT entity FROM UserEntity entity WHERE entity.email = :email")
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

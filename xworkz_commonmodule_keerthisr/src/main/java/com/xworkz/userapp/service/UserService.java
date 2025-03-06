@@ -7,4 +7,6 @@ import java.lang.reflect.InvocationTargetException;
 
 public interface UserService {
     boolean  validateAndUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException;
+    UserDto getPasswordByEmail(String email, String enteredPassword);
+
 }

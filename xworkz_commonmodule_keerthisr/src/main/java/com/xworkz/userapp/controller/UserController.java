@@ -5,10 +5,12 @@ import com.xworkz.userapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.regex.Pattern;
+
 
 
 @Component
@@ -33,5 +35,17 @@ public class UserController {
 
         model.addAttribute("name", dto.getName());
         return "response.jsp";
+    }
+
+    @PostMapping("/signIn")
+    public String signIn(@RequestParam String email, @RequestParam String password, Model model) {
+        try {
+            UserDto user = userService.getPasswordByEmail(email, password);
+            model.addAttribute("user", user);
+            return "welcome.jsp";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", "Invalid user");
+            return "error.jsp";
+        }
     }
 }

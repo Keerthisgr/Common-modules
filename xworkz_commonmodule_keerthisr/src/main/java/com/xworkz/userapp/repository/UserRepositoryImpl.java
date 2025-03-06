@@ -22,4 +22,11 @@ public class UserRepositoryImpl implements UserRepository{
         entityManager.close();
         return true;
     }
+
+    @Override
+    public UserEntity fetchPasswordByEmail(String email) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        UserEntity userEntity = (UserEntity) entityManager.createNamedQuery("getPasswordByEmail").setParameter("email", email).getSingleResult();
+        return userEntity;
+    }
 }
