@@ -11,14 +11,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.lang.reflect.InvocationTargetException;
 
-
-
 @Component
 @RequestMapping("/")
 public class UserController {
 
     public UserController() {
-        System.out.println("controller default constructor is invoked");
+        System.out.println("Controller default constructor is invoked");
     }
 
     @Autowired
@@ -26,6 +24,16 @@ public class UserController {
 
     @RequestMapping("addUser")
     public String addUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
+
+        // Validate password and confirm password
+        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
+            model.addAttribute("error", "Password and Confirm Password must match.");
+            return "error.jsp";
+        }
+
+        // Encrypt and save user
+        dto.setPassword(userService.encryptPassword(dto.getPassword()));
+        dto.setConfirmPassword(dto.getPassword());
 
         boolean isValid = userService.validateAndUser(dto, model);
 
@@ -40,9 +48,24 @@ public class UserController {
     @PostMapping("/signIn")
     public String signIn(@RequestParam String email, @RequestParam String password, Model model) {
         try {
-            UserDto user = userService.getPasswordByEmail(email, password);
-            model.addAttribute("user", user);
-            return "welcome.jsp";
+            UserDto user = userService.getPasswordByEmail(email,password);
+
+            if (user == null) {
+                model.addAttribute("error", "User not found");
+                return "error.jsp";
+            }
+
+            // Verify password using BCrypt
+            boolean passwordMatches = userService.matchPassword(password, user.getPassword());
+
+            if (passwordMatches) {
+                model.addAttribute("user", user);
+                return "welcome.jsp";
+            } else {
+                model.addAttribute("error", "Invalid email or password");
+                return "error.jsp";
+            }
+
         } catch (RuntimeException e) {
             model.addAttribute("error", "Invalid user");
             return "error.jsp";

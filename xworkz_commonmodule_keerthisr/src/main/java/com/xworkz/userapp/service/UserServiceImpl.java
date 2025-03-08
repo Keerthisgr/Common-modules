@@ -5,6 +5,7 @@ import com.xworkz.userapp.entity.UserEntity;
 import com.xworkz.userapp.repository.UserRepository;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
@@ -61,9 +62,19 @@ public class UserServiceImpl implements UserService{
 
 
         UserEntity entity = new UserEntity();
-        BeanUtils.copyProperties(dto, entity);
+        BeanUtils.copyProperties(entity, dto);
         repository.saveUser(entity);
         return true;
+    }
+
+    @Override
+    public String encryptPassword(String password) {
+        return BCrypt.hashpw(password, BCrypt.gensalt(12));
+    }
+
+    @Override
+    public boolean matchPassword(String enteredPassword, String storedHash) {
+        return BCrypt.checkpw(enteredPassword, storedHash);
     }
 
     @Override
@@ -81,13 +92,12 @@ public class UserServiceImpl implements UserService{
             System.out.println(e.getMessage());
         }
 
-
-        if (userEntity.getPassword().equals(enteredPassword)) {
+        // Use BCrypt to compare entered password with stored encrypted password
+        if (matchPassword(enteredPassword, userEntity.getPassword())) {
             return userDto;
         } else {
             throw new RuntimeException("Invalid password. Please try again.");
         }
-    }
+
 }
-
-
+}

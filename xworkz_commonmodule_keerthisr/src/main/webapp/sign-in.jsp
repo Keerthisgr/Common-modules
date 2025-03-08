@@ -1,9 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=US-ASCII" pageEncoding="US-ASCII"%>
+<%@ page isELIgnored="false" %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Form</title>
+    <title>User Registration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
       body {
@@ -19,36 +21,38 @@
       }
 
       .form-container {
-          background: rgb(180, 180, 180);
+          background: rgba(255, 255, 255, 0.9);
           padding: 20px;
           border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
           width: 500px;
       }
 
+      .navbar {
+          width: 100%;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1000;
+      }
 
-        .navbar {
-            width: 100%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-        }
-        .navbar-brand img {
-            height: 50px;
-        }
+      .navbar-brand img {
+          height: 50px;
+      }
 
-        label {
-            font-weight: bold;
-        }
-        .error-message {
-            color: red;
-            font-size: 12px;
-        }
+      label {
+          font-weight: bold;
+      }
+
+      .error-message {
+          color: red;
+          font-size: 12px;
+      }
     </style>
 </head>
 <body>
 
+<!-- ✅ Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">
@@ -73,37 +77,51 @@
     </div>
 </nav>
 
-<div class="container">
+<!-- ✅ Form -->
+<div class="container mt-5">
     <div class="form-container">
         <h2 class="text-center">User Registration</h2>
+
+        <%-- ✅ Success Message --%>
+        <c:if test="${not empty successMessage}">
+            <p class="text-success text-center">${successMessage}</p>
+        </c:if>
+
         <form action="addUser" method="post">
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" class="form-control" required>
+                    <input type="text" id="name" name="name" class="form-control" value="${param.name}" required>
+                    <span class="error-message">${nameError}</span>
                 </div>
+
                 <div class="col-md-6 form-group">
                     <label for="email">Email:</label>
-                    <input type="text" id="email" name="email" class="form-control" required>
+                    <input type="text" id="email" name="email" class="form-control" value="${param.email}" required>
+                    <span class="error-message">${emailError}</span>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="password">Password:</label>
-                    <input type="text" id="password" name="password" class="form-control" required>
+                    <input type="password" id="password" name="password" class="form-control" required>
                 </div>
+
                 <div class="col-md-6 form-group">
                     <label for="confirmPassword">Confirm Password:</label>
-                    <input type="text" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                    <span class="error-message">${passwordError}</span>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="phoneNumber">Phone Number:</label>
-                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" required>
+                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="${param.phoneNumber}" required>
+                    <span class="error-message">${phoneError}</span>
                 </div>
+
                 <div class="col-md-6 form-group">
                     <label for="location">Location:</label>
                     <select id="location" name="location" class="form-control" required>
@@ -116,7 +134,6 @@
                         <option value="Chithradurga">Chithradurga</option>
                     </select>
                 </div>
-
             </div>
 
             <div class="row">
@@ -129,6 +146,7 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
+
                 <div class="col-md-6 form-group">
                     <label for="dOB">Date of Birth:</label>
                     <input type="date" id="dOB" name="dOB" class="form-control" required>
@@ -138,11 +156,11 @@
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="age">Age:</label>
-                    <input type="text" id="age" name="age" class="form-control" required>
+                    <input type="text" id="age" name="age" class="form-control" value="${param.age}" required>
                 </div>
             </div>
 
-            <div class="text-center">
+            <div class="text-center mt-3">
                 <input type="submit" value="SUBMIT" class="btn btn-success">
             </div>
         </form>
@@ -150,8 +168,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
 
 </body>
 </html>
