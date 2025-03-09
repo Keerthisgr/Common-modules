@@ -10,4 +10,6 @@ public interface UserService {
     UserDto getPasswordByEmail(String email, String enteredPassword);
     String encryptPassword(String password);
     boolean matchPassword(String enteredPassword, String storedHash);
+    boolean updateUserByEmail(String email, UserDto dto, Model model);
+    UserDto getUserByEmail(String email);
 }

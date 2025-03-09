@@ -14,6 +14,7 @@ import javax.persistence.*;
 @ToString
 @Table(name = "user_info")
 @NamedQuery(name = "getPasswordByEmail", query = "SELECT entity FROM UserEntity entity WHERE entity.email = :email")
+@NamedQuery(name = "UserEntity.updateByEmail", query = "UPDATE UserEntity u SET u.name = :name, u.phoneNumber = :phoneNumber, u.location = :location, u.age = :age, u.password = :password WHERE u.email = :email")
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +25,7 @@ public class UserEntity {
     @Column(name = "confirm_password")
     private String confirmPassword;
     @Column(name = "phone_number")
-    private Long phoneNumber;
+    private String phoneNumber;
     private String location;
     private String gender;
     private String dOB;

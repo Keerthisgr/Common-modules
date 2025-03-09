@@ -77,12 +77,10 @@
                 <li class="nav-item">
                     <a class="nav-link" href="index.jsp">Home</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="signup.jsp">Sign In</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="signin.jsp">Sign Up</a>
-                </li>
+
+                 <li class="nav-item">
+                                    <a class="nav-link" href="update-profile.jsp">Update Profile</a>
+                                </li>
             </ul>
         </div>
     </div>
@@ -90,7 +88,7 @@
 
 <!-- Welcome Message -->
 <div class="welcome-container">
-    <h2>Welcome, ${user.name}!</h2>
+    <h2>Welcome ${user.name}!</h2>
     <p>You have successfully logged in!</p>
     <a href="index.jsp" class="btn-logout">Logout</a>
 </div>

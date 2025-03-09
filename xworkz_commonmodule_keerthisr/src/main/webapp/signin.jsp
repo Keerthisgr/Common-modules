@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=US-ASCII" pageEncoding="US-ASCII"%>
+<%@ page isELIgnored="false" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,12 +46,30 @@
         .error-message {
             color: red;
             font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .register-link {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: blue;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
-<!-- Navigation Bar -->
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">
@@ -65,9 +84,6 @@
                     <a class="nav-link" href="index.jsp">Home</a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="sign-in.jsp">Sign Up</a>
-                </li>
             </ul>
         </div>
     </div>
@@ -76,19 +92,34 @@
 <!-- Sign-In Form -->
 <div class="form-container">
     <h2 class="text-center">Sign In</h2>
+
+
+    <c:if test="${not empty error}">
+        <p class="error-message text-center">${error}</p>
+    </c:if>
+
     <form action="signIn" method="post">
         <div class="mb-3">
             <label for="email">Email:</label>
-            <input type="text" id="email" name="email" class="form-control" required>
+            <input type="text" id="email" name="email" class="form-control" value="${param.email}" required>
+            <c:if test="${not empty emailError}">
+                <p class="error-message">${emailError}</p>
+            </c:if>
         </div>
         <div class="mb-3">
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" class="form-control" required>
+            <c:if test="${not empty passwordError}">
+                <p class="error-message">${passwordError}</p>
+            </c:if>
         </div>
         <div class="text-center">
             <input type="submit" value="SIGN IN" class="btn btn-primary">
         </div>
     </form>
+
+
+    <p class="register-link">Not registered? <a href="sign-in.jsp">Register here</a></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

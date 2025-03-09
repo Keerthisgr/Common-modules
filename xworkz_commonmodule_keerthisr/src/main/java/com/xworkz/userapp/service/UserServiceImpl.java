@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
+import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public boolean validateAndUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
+        boolean errors = false;
         if (dto == null) {
             model.addAttribute("error", "User details cannot be null.");
             return false;
@@ -28,39 +30,43 @@ public class UserServiceImpl implements UserService{
 
 
 
-        String nameRegex = "^[A-Z][a-zA-Z]{2,49}$";
+        String nameRegex = "^[A-Z][a-zA-Z ]{2,49}$";
         Pattern namePattern = Pattern.compile(nameRegex);
 
         if (dto.getName() == null || !namePattern.matcher(dto.getName()).matches()) {
-            model.addAttribute("error", "Invalid Name");
-            return false;
+            model.addAttribute("nameError", "Invalid Name: Must start with an uppercase letter and contain only letters and spaces.");
+            errors = true;
         }
+
 
 
         String phoneRegex = "^[9876]\\d{9}$";
         Pattern phonePattern = Pattern.compile(phoneRegex);
 
         if (dto.getPhoneNumber() == null || !phonePattern.matcher(String.valueOf(dto.getPhoneNumber())).matches()) {
-            model.addAttribute("error", "Invalid Phone Number");
-            return false;
+            model.addAttribute("phoneError", "Invalid Phone Number");
+            errors= true;
         }
 
 
         if (dto.getPassword() == null || dto.getConfirmPassword() == null ||
                 !dto.getPassword().equals(dto.getConfirmPassword())) {
-            model.addAttribute("error", "Password and Confirm Password must be the same.");
-            return false;
+            model.addAttribute("passwordError", "Password and Confirm Password must be the same.");
+            errors= true;
         }
 
         String emailRegex = "^(?=.*[!@#$%^&*])[a-z0-9]+@gmail\\.com$";
         Pattern emailPattern = Pattern.compile(emailRegex);
 
         if (dto.getEmail() == null || !emailPattern.matcher(dto.getEmail()).matches()) {
-            model.addAttribute("error", "Invalid Email");
-            return false;
+            model.addAttribute("emailError", "Invalid Email");
+            errors= true;
         }
 
 
+        if(errors){
+            return false;
+        }
         UserEntity entity = new UserEntity();
         BeanUtils.copyProperties(entity, dto);
         repository.saveUser(entity);
@@ -83,7 +89,7 @@ public class UserServiceImpl implements UserService{
         UserEntity userEntity = repository.fetchPasswordByEmail(email);
 
         if (userEntity == null) {
-            throw new RuntimeException("User not found with email: " + email);
+            return null;
         }
 
         try {
@@ -92,12 +98,63 @@ public class UserServiceImpl implements UserService{
             System.out.println(e.getMessage());
         }
 
-        // Use BCrypt to compare entered password with stored encrypted password
-        if (matchPassword(enteredPassword, userEntity.getPassword())) {
-            return userDto;
-        } else {
-            throw new RuntimeException("Invalid password. Please try again.");
+
+        if (!matchPassword(enteredPassword, userEntity.getPassword())) {
+            return null;
         }
 
-}
+        return userDto;
+    }
+
+    @Override
+    public UserDto getUserByEmail(String email) {
+        UserEntity userEntity = repository.findByEmail(email);
+        if (userEntity == null) return null;
+
+        UserDto dto = new UserDto();
+        try {
+            BeanUtils.copyProperties(dto, userEntity);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            System.out.println("Error copying properties: " + e.getMessage());
+        }
+        return dto;
+    }
+@Transactional
+    @Override
+    public boolean updateUserByEmail(String email, UserDto dto, Model model) {
+    System.out.println("In service updateUserByEmail started");
+        UserEntity existingUser = repository.findByEmail(email);
+
+        if (existingUser == null) {
+            model.addAttribute("error", "User not found.");
+            return false;
+        }
+
+
+        String newPassword = existingUser.getPassword();
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+            newPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt(12));
+        }
+
+
+        int rowsUpdated = repository.updateByEmail(
+                email,
+                dto.getName(),
+                String.valueOf(dto.getPhoneNumber()),
+                dto.getLocation(),
+                dto.getAge(),
+                newPassword
+        );
+        System.out.println("service is getting updated repo rows" + rowsUpdated);
+        if (rowsUpdated > 0) {
+            model.addAttribute("successMessage", "Profile updated successfully!");
+            System.out.println("In service updateUserByEmail started");
+            return true;
+        } else {
+            model.addAttribute("error", "Failed to update profile.");
+            return false;
+        }
+    }
+
+
 }

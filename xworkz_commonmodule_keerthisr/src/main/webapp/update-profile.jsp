@@ -11,7 +11,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: url('https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736884_1280.jpg') no-repeat center center fixed;
+            background: url('https://cdn.pixabay.com/photo/2018/01/12/10/19/fantasy-3077928_1280.jpg') no-repeat center center fixed;
             background-size: cover;
             height: 100vh;
             margin: 0;
@@ -49,11 +49,17 @@
             color: red;
             font-size: 12px;
         }
+
+        .success-message {
+            color: green;
+            font-size: 14px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-<!-- ✅ Navbar -->
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">
@@ -71,17 +77,25 @@
                     <a class="nav-link" href="welcome.jsp">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="logout.jsp">Logout</a>
+                    <a class="nav-link" href="index.jsp">Logout</a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- ✅ Update Profile Form -->
+
 <div class="container mt-5">
     <div class="form-container">
         <h2 class="text-center">Update Profile</h2>
+
+
+        <c:if test="${not empty successMessage}">
+            <p class="success-message">${successMessage}</p>
+        </c:if>
+        <c:if test="${not empty error}">
+            <p class="error-message">${error}</p>
+        </c:if>
 
         <form action="updateUser" method="post">
             <input type="hidden" name="email" value="${loggedInUser.email}" />
@@ -98,8 +112,8 @@
 
             <div class="mb-3">
                 <label>Location:</label>
-                <select id="location" name="location" class="form-control" required>
-                    <option value="" disabled>Select Location</option>
+                <select name="location" class="form-control" required>
+                 <option value="" disabled selected>Select Location</option>
                     <option value="Bangalore" ${loggedInUser.location == 'Bangalore' ? 'selected' : ''}>Bangalore</option>
                     <option value="Shivamogga" ${loggedInUser.location == 'Shivamogga' ? 'selected' : ''}>Shivamogga</option>
                     <option value="Mysore" ${loggedInUser.location == 'Mysore' ? 'selected' : ''}>Mysore</option>
@@ -125,8 +139,6 @@
         </form>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

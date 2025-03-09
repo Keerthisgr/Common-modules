@@ -52,7 +52,6 @@
 </head>
 <body>
 
-<!-- ✅ Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">
@@ -77,12 +76,12 @@
     </div>
 </nav>
 
-<!-- ✅ Form -->
+
 <div class="container mt-5">
     <div class="form-container">
         <h2 class="text-center">User Registration</h2>
 
-        <%-- ✅ Success Message --%>
+
         <c:if test="${not empty successMessage}">
             <p class="text-success text-center">${successMessage}</p>
         </c:if>
@@ -92,13 +91,18 @@
                 <div class="col-md-6 form-group">
                     <label for="name">Name:</label>
                     <input type="text" id="name" name="name" class="form-control" value="${param.name}" required>
-                    <span class="error-message">${nameError}</span>
+                    <c:if test="${not empty nameError}">
+                        <p class="error-message">${nameError}</p>
+                    </c:if>
                 </div>
+
 
                 <div class="col-md-6 form-group">
                     <label for="email">Email:</label>
                     <input type="text" id="email" name="email" class="form-control" value="${param.email}" required>
-                    <span class="error-message">${emailError}</span>
+                    <c:if test="${not empty emailError}">
+                        <p class="error-message">${emailError}</p>
+                    </c:if>
                 </div>
             </div>
 
@@ -111,7 +115,9 @@
                 <div class="col-md-6 form-group">
                     <label for="confirmPassword">Confirm Password:</label>
                     <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
-                    <span class="error-message">${passwordError}</span>
+                    <c:if test="${not empty passwordError}">
+                        <p class="error-message">${passwordError}</p>
+                    </c:if>
                 </div>
             </div>
 
@@ -119,7 +125,9 @@
                 <div class="col-md-6 form-group">
                     <label for="phoneNumber">Phone Number:</label>
                     <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="${param.phoneNumber}" required>
-                    <span class="error-message">${phoneError}</span>
+                    <c:if test="${not empty phoneError}">
+                        <p class="error-message">${phoneError}</p>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6 form-group">
@@ -164,6 +172,8 @@
                 <input type="submit" value="SUBMIT" class="btn btn-success">
             </div>
         </form>
+
+
     </div>
 </div>
 

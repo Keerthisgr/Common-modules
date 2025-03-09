@@ -5,10 +5,12 @@ import com.xworkz.userapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpSession;
 import java.lang.reflect.InvocationTargetException;
 
 @Component
@@ -25,50 +27,77 @@ public class UserController {
     @RequestMapping("addUser")
     public String addUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
 
-        // Validate password and confirm password
-        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
-            model.addAttribute("error", "Password and Confirm Password must match.");
-            return "error.jsp";
-        }
-
-        // Encrypt and save user
-        dto.setPassword(userService.encryptPassword(dto.getPassword()));
-        dto.setConfirmPassword(dto.getPassword());
-
         boolean isValid = userService.validateAndUser(dto, model);
 
         if (!isValid) {
-            return "error.jsp";
+            return "sign-in.jsp";
         }
 
         model.addAttribute("name", dto.getName());
         return "response.jsp";
     }
-
     @PostMapping("/signIn")
-    public String signIn(@RequestParam String email, @RequestParam String password, Model model) {
-        try {
-            UserDto user = userService.getPasswordByEmail(email,password);
+    public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
+        UserDto user = userService.getPasswordByEmail(email, password);
 
-            if (user == null) {
-                model.addAttribute("error", "User not found");
-                return "error.jsp";
-            }
-
-            // Verify password using BCrypt
-            boolean passwordMatches = userService.matchPassword(password, user.getPassword());
-
-            if (passwordMatches) {
-                model.addAttribute("user", user);
-                return "welcome.jsp";
-            } else {
-                model.addAttribute("error", "Invalid email or password");
-                return "error.jsp";
-            }
-
-        } catch (RuntimeException e) {
-            model.addAttribute("error", "Invalid user");
-            return "error.jsp";
+        if (user == null) {
+            model.addAttribute("error", "Invalid email or password.");
+            return "signin.jsp";
         }
+
+
+        session.setAttribute("loggedInUserEmail", user.getEmail());
+
+        model.addAttribute("user", user);
+        return "welcome.jsp";
     }
+
+
+
+@GetMapping("/editProfile")
+public String editProfile(HttpSession session, Model model) {
+
+    String email = (String) session.getAttribute("loggedInUserEmail");
+
+    if (email == null || email.isEmpty()) {
+        model.addAttribute("error", "Session expired. Please log in again.");
+        return "signin.jsp";
+    }
+
+
+    UserDto user = userService.getUserByEmail(email);
+
+    if (user == null) {
+        model.addAttribute("error", "User not found.");
+        return "update-profile.jsp";
+    }
+
+    model.addAttribute("loggedInUser", user);
+    return "update-profile.jsp";
+}
+
+
+    @PostMapping("/updateUser")
+    public String updateUser(UserDto dto, Model model, HttpSession session) {
+        System.out.println("In controller updateUser started");
+        String email = (String) session.getAttribute("loggedInUserEmail");
+
+        if (email == null) {
+            model.addAttribute("error", "Session expired. Please log in again.");
+            return "sign-in.jsp";
+        }
+
+        boolean isUpdated = userService.updateUserByEmail(email, dto, model);
+
+        if (isUpdated) {
+            model.addAttribute("successMessage", "Profile updated successfully!");
+        } else {
+            model.addAttribute("error", "Failed to update profile.");
+        }
+        System.out.println("In controller updateUser ended");
+        return "update-profile.jsp";
+    }
+
+
+
 }
