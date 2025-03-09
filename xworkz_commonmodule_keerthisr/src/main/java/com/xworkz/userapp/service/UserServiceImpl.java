@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 
 import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
 @Service
@@ -69,6 +70,9 @@ public class UserServiceImpl implements UserService{
         }
         UserEntity entity = new UserEntity();
         BeanUtils.copyProperties(entity, dto);
+        String encryptedPassword = encryptPassword(dto.getPassword());
+        entity.setPassword(encryptedPassword);
+        entity.setConfirmPassword(encryptedPassword);
         repository.saveUser(entity);
         return true;
     }
@@ -85,26 +89,53 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserDto getPasswordByEmail(String email, String enteredPassword) {
-        UserDto userDto = new UserDto();
-        UserEntity userEntity = repository.fetchPasswordByEmail(email);
+        UserEntity userEntity = repository.findByEmail(email);
 
         if (userEntity == null) {
+            System.out.println("User not found.");
             return null;
         }
 
+
+        if (userEntity.isAccountLocked()) {
+            LocalDateTime lockedAt = userEntity.getLockTime();
+            if (lockedAt != null && lockedAt.plusHours(24).isAfter(LocalDateTime.now())) {
+                System.out.println("Account is still locked.");
+                return null;
+            } else {
+                System.out.println("Unlocking account after 24 hours.");
+                repository.resetAttempts(email);
+            }
+        }
+
+
+        if (!BCrypt.checkpw(enteredPassword, userEntity.getPassword())) {
+            int attempts = userEntity.getFailedAttempts() + 1;
+            System.out.println("Failed login attempt count: " + attempts);
+
+            if (attempts >= 3) {
+                System.out.println("Locking account...");
+                repository.lockAccount(email, LocalDateTime.now());
+            } else {
+                System.out.println("Updating failed attempts in the database.");
+                repository.updateFailedAttempts(email, attempts);
+            }
+            return null;
+        }
+
+
+        System.out.println("Resetting failed attempts on successful login.");
+        repository.resetAttempts(email);
+
+        UserDto userDto = new UserDto();
         try {
             BeanUtils.copyProperties(userDto, userEntity);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException(e);
         }
-
-
-        if (!matchPassword(enteredPassword, userEntity.getPassword())) {
-            return null;
-        }
-
         return userDto;
     }
+
 
     @Override
     public UserDto getUserByEmail(String email) {
@@ -155,6 +186,72 @@ public class UserServiceImpl implements UserService{
             return false;
         }
     }
+    @Override
+    public UserDto getPasswordByEmailId(String email, String enteredPassword) {
+        UserEntity userEntity = repository.findByEmail(email);
+
+        if (userEntity == null) {
+            return null;
+        }
+
+
+        if (userEntity.isAccountLocked()) {
+            LocalDateTime lockedAt = userEntity.getLockTime();
+            if (lockedAt != null && lockedAt.plusHours(24).isAfter(LocalDateTime.now())) {
+                return null;
+            } else {
+                repository.resetAttempts(email);
+            }
+        }
+
+
+        if (!BCrypt.checkpw(enteredPassword, userEntity.getPassword())) {
+            int attempts = userEntity.getFailedAttempts() + 1;
+            if (attempts >= 3) {
+                repository.lockAccount(email, LocalDateTime.now());
+            } else {
+                repository.updateFailedAttempts(email, attempts);
+            }
+            return null;
+        }
+
+
+        repository.resetAttempts(email);
+
+        UserDto userDto = new UserDto();
+        try {
+            BeanUtils.copyProperties(userDto, userEntity);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+        return userDto;
+    }
+
+
+    @Override
+    @Transactional
+    public boolean resetPassword(String email, String newPassword) {
+        UserEntity userEntity = repository.findByEmail(email);
+
+        if (userEntity == null) {
+            System.out.println("User not found for email: " + email);
+            return false;
+        }
+
+
+        String encryptedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+
+
+        repository.updatePassword(email, encryptedPassword);
+        System.out.println("Password updated successfully for email: " + email);
+
+
+        repository.resetAttempts(email);
+        System.out.println("Failed attempts reset to 0 for email: " + email);
+
+        return true;
+    }
+
 
 
 }

@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @ToString
@@ -18,4 +20,5 @@ public class UserDto {
     private String gender;
     private String dOB;
     private Integer age;
+
 }

@@ -12,4 +12,6 @@ public interface UserService {
     boolean matchPassword(String enteredPassword, String storedHash);
     boolean updateUserByEmail(String email, UserDto dto, Model model);
     UserDto getUserByEmail(String email);
+    boolean resetPassword(String email, String newPassword);
+    UserDto getPasswordByEmailId(String email, String enteredPassword);
 }

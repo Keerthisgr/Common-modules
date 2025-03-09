@@ -120,6 +120,7 @@
 
 
     <p class="register-link">Not registered? <a href="sign-in.jsp">Register here</a></p>
+     <p class="register-link">Forgot password? <a href="forgot-password.jsp">Create new password</a></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

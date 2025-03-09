@@ -9,6 +9,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository{
@@ -75,5 +76,53 @@ public class UserRepositoryImpl implements UserRepository{
         System.out.println("Repo updateByEmail ended");
         return noOfRowsUpdated;
 
+    }
+
+
+    @Override
+    public void updateFailedAttempts(String email, int attempts) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+        entityManager.createQuery("UPDATE UserEntity u SET u.failedAttempts = :attempts WHERE u.email = :email")
+                .setParameter("attempts", attempts)
+                .setParameter("email", email)
+                .executeUpdate();
+        entityManager.getTransaction().commit();
+        entityManager.close();
+    }
+
+    @Override
+    public void lockAccount(String email, LocalDateTime lockTime) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+        entityManager.createQuery("UPDATE UserEntity u SET u.accountLocked = true, u.lockTime = :lockTime WHERE u.email = :email")
+                .setParameter("lockTime", lockTime)
+                .setParameter("email", email)
+                .executeUpdate();
+        entityManager.getTransaction().commit();
+        entityManager.close();
+    }
+
+    @Override
+    public void resetAttempts(String email) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+        entityManager.createQuery("UPDATE UserEntity u SET u.failedAttempts = 0, u.accountLocked = false, u.lockTime = null WHERE u.email = :email")
+                .setParameter("email", email)
+                .executeUpdate();
+        entityManager.getTransaction().commit();
+        entityManager.close();
+    }
+    @Override
+    @Transactional
+    public void updatePassword(String email, String newPassword) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+        entityManager.createQuery("UPDATE UserEntity u SET u.password = :password WHERE u.email = :email")
+                .setParameter("password", newPassword)
+                .setParameter("email", email)
+                .executeUpdate();
+        entityManager.getTransaction().commit();
+        entityManager.close();
     }
 }

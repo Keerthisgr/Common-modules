@@ -98,6 +98,20 @@ public String editProfile(HttpSession session, Model model) {
         return "update-profile.jsp";
     }
 
+    @PostMapping("/forgotPassword")
+    public String forgotPassword(@RequestParam String email, @RequestParam String newPassword, Model model) {
+        boolean isReset = userService.resetPassword(email, newPassword);
+
+        if (!isReset) {
+            model.addAttribute("error", "User not found.");
+            return "forgot-password.jsp";
+        }
+
+        model.addAttribute("successMessage", "Password reset successfully! You can now log in.");
+        return "signin.jsp";
+    }
+
+
 
 
 }
