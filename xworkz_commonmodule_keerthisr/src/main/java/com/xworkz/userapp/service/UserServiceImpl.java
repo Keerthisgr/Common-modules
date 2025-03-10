@@ -12,67 +12,69 @@ import org.springframework.ui.Model;
 import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 @Service
-public class UserServiceImpl implements UserService{
-
+public class UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository repository;
 
+    // Generates a random password
+    public String generateRandomPassword() {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
+        Random rnd = new Random();
+        for (int i = 0; i < 8; i++) {
+            password.append(characters.charAt(rnd.nextInt(characters.length())));
+        }
+        return password.toString();
+    }
+
     @Override
     public boolean validateAndUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
         boolean errors = false;
+
         if (dto == null) {
             model.addAttribute("error", "User details cannot be null.");
             return false;
         }
 
-
-
         String nameRegex = "^[A-Z][a-zA-Z ]{2,49}$";
         Pattern namePattern = Pattern.compile(nameRegex);
-
         if (dto.getName() == null || !namePattern.matcher(dto.getName()).matches()) {
             model.addAttribute("nameError", "Invalid Name: Must start with an uppercase letter and contain only letters and spaces.");
             errors = true;
         }
 
-
-
         String phoneRegex = "^[9876]\\d{9}$";
         Pattern phonePattern = Pattern.compile(phoneRegex);
-
         if (dto.getPhoneNumber() == null || !phonePattern.matcher(String.valueOf(dto.getPhoneNumber())).matches()) {
             model.addAttribute("phoneError", "Invalid Phone Number");
-            errors= true;
-        }
-
-
-        if (dto.getPassword() == null || dto.getConfirmPassword() == null ||
-                !dto.getPassword().equals(dto.getConfirmPassword())) {
-            model.addAttribute("passwordError", "Password and Confirm Password must be the same.");
-            errors= true;
+            errors = true;
         }
 
         String emailRegex = "^(?=.*[!@#$%^&*])[a-z0-9]+@gmail\\.com$";
         Pattern emailPattern = Pattern.compile(emailRegex);
-
         if (dto.getEmail() == null || !emailPattern.matcher(dto.getEmail()).matches()) {
             model.addAttribute("emailError", "Invalid Email");
-            errors= true;
+            errors = true;
         }
 
-
-        if(errors){
+        if (errors) {
             return false;
         }
+
+        // Generate, print, encrypt password
+        String generatedPassword = generateRandomPassword();
+        System.out.println("Generated Password for " + dto.getEmail() + " is: " + generatedPassword);
+
         UserEntity entity = new UserEntity();
         BeanUtils.copyProperties(entity, dto);
-        String encryptedPassword = encryptPassword(dto.getPassword());
-        entity.setPassword(encryptedPassword);
-        entity.setConfirmPassword(encryptedPassword);
+        entity.setPassword(encryptPassword(generatedPassword));
+        entity.setFailedAttempts(-1);
+
         repository.saveUser(entity);
         return true;
     }
@@ -88,7 +90,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserDto getPasswordByEmail(String email, String enteredPassword) {
+    public UserDto authenticateUser(String email, String password) {
         UserEntity userEntity = repository.findByEmail(email);
 
         if (userEntity == null) {
@@ -96,7 +98,7 @@ public class UserServiceImpl implements UserService{
             return null;
         }
 
-
+        // Check if account is locked
         if (userEntity.isAccountLocked()) {
             LocalDateTime lockedAt = userEntity.getLockTime();
             if (lockedAt != null && lockedAt.plusHours(24).isAfter(LocalDateTime.now())) {
@@ -108,8 +110,8 @@ public class UserServiceImpl implements UserService{
             }
         }
 
-
-        if (!BCrypt.checkpw(enteredPassword, userEntity.getPassword())) {
+        // Check password
+        if (!BCrypt.checkpw(password, userEntity.getPassword())) {
             int attempts = userEntity.getFailedAttempts() + 1;
             System.out.println("Failed login attempt count: " + attempts);
 
@@ -117,12 +119,10 @@ public class UserServiceImpl implements UserService{
                 System.out.println("Locking account...");
                 repository.lockAccount(email, LocalDateTime.now());
             } else {
-                System.out.println("Updating failed attempts in the database.");
                 repository.updateFailedAttempts(email, attempts);
             }
             return null;
         }
-
 
         System.out.println("Resetting failed attempts on successful login.");
         repository.resetAttempts(email);
@@ -135,7 +135,6 @@ public class UserServiceImpl implements UserService{
         }
         return userDto;
     }
-
 
     @Override
     public UserDto getUserByEmail(String email) {
@@ -150,23 +149,20 @@ public class UserServiceImpl implements UserService{
         }
         return dto;
     }
-@Transactional
+
+    @Transactional
     @Override
     public boolean updateUserByEmail(String email, UserDto dto, Model model) {
-    System.out.println("In service updateUserByEmail started");
         UserEntity existingUser = repository.findByEmail(email);
-
         if (existingUser == null) {
             model.addAttribute("error", "User not found.");
             return false;
         }
 
-
         String newPassword = existingUser.getPassword();
         if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-            newPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt(12));
+            newPassword = encryptPassword(dto.getPassword());
         }
-
 
         int rowsUpdated = repository.updateByEmail(
                 email,
@@ -176,82 +172,56 @@ public class UserServiceImpl implements UserService{
                 dto.getAge(),
                 newPassword
         );
-        System.out.println("service is getting updated repo rows" + rowsUpdated);
+
         if (rowsUpdated > 0) {
             model.addAttribute("successMessage", "Profile updated successfully!");
-            System.out.println("In service updateUserByEmail started");
             return true;
         } else {
             model.addAttribute("error", "Failed to update profile.");
             return false;
         }
     }
-    @Override
-    public UserDto getPasswordByEmailId(String email, String enteredPassword) {
-        UserEntity userEntity = repository.findByEmail(email);
-
-        if (userEntity == null) {
-            return null;
-        }
-
-
-        if (userEntity.isAccountLocked()) {
-            LocalDateTime lockedAt = userEntity.getLockTime();
-            if (lockedAt != null && lockedAt.plusHours(24).isAfter(LocalDateTime.now())) {
-                return null;
-            } else {
-                repository.resetAttempts(email);
-            }
-        }
-
-
-        if (!BCrypt.checkpw(enteredPassword, userEntity.getPassword())) {
-            int attempts = userEntity.getFailedAttempts() + 1;
-            if (attempts >= 3) {
-                repository.lockAccount(email, LocalDateTime.now());
-            } else {
-                repository.updateFailedAttempts(email, attempts);
-            }
-            return null;
-        }
-
-
-        repository.resetAttempts(email);
-
-        UserDto userDto = new UserDto();
-        try {
-            BeanUtils.copyProperties(userDto, userEntity);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-        return userDto;
-    }
-
 
     @Override
     @Transactional
     public boolean resetPassword(String email, String newPassword) {
         UserEntity userEntity = repository.findByEmail(email);
-
         if (userEntity == null) {
             System.out.println("User not found for email: " + email);
             return false;
         }
 
-
-        String encryptedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
-
-
+        String encryptedPassword = encryptPassword(newPassword);
         repository.updatePassword(email, encryptedPassword);
-        System.out.println("Password updated successfully for email: " + email);
-
-
         repository.resetAttempts(email);
-        System.out.println("Failed attempts reset to 0 for email: " + email);
 
+        System.out.println("Password reset successfully for " + email);
         return true;
     }
 
+    @Override
+    public boolean saveUserWithPassword(UserDto dto, String password, Model model) {
 
+
+        String generatedPassword = generateRandomPassword();
+        System.out.println("Generated Password for " + dto.getEmail() + " is: " + generatedPassword);
+
+
+        UserEntity entity = new UserEntity();
+        entity.setEmail(dto.getEmail());
+        entity.setName(dto.getName());
+        entity.setPassword(encryptPassword(generatedPassword));
+        entity.setPhoneNumber(dto.getPhoneNumber());
+        entity.setLocation(dto.getLocation());
+        entity.setAge(dto.getAge());
+        entity.setDOB(dto.getDOB());
+        entity.setGender(dto.getGender());
+        entity.setFailedAttempts(-1);
+
+
+        repository.saveUser(entity);
+        return true;
+
+    }
 
 }

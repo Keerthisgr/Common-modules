@@ -23,34 +23,36 @@ public class UserController {
 
     @Autowired
     UserService userService;
+//
+//    @RequestMapping("addUser")
+//    public String addUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
+//
+//        boolean isValid = userService.validateAndUser(dto, model);
+//
+//        if (!isValid) {
+//            return "sign-in.jsp";
+//        }
+//
+//        model.addAttribute("name", dto.getName());
+//        return "response.jsp";
+//    }
+//    @PostMapping("/signIn")
+//    public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
+//        UserDto user = userService.getPasswordByEmail(email, password);
+//
+//        if (user == null) {
+//            model.addAttribute("error", "Invalid email or password.");
+//            return "signin.jsp";
+//        }
+//
+//
+//
+//        session.setAttribute("loggedInUserEmail", user.getEmail());
+//
+//        model.addAttribute("user", user);
+//        return "welcome.jsp";
+//    }
 
-    @RequestMapping("addUser")
-    public String addUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
-
-        boolean isValid = userService.validateAndUser(dto, model);
-
-        if (!isValid) {
-            return "sign-in.jsp";
-        }
-
-        model.addAttribute("name", dto.getName());
-        return "response.jsp";
-    }
-    @PostMapping("/signIn")
-    public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
-        UserDto user = userService.getPasswordByEmail(email, password);
-
-        if (user == null) {
-            model.addAttribute("error", "Invalid email or password.");
-            return "signin.jsp";
-        }
-
-
-        session.setAttribute("loggedInUserEmail", user.getEmail());
-
-        model.addAttribute("user", user);
-        return "welcome.jsp";
-    }
 
 
 
@@ -98,20 +100,65 @@ public String editProfile(HttpSession session, Model model) {
         return "update-profile.jsp";
     }
 
-    @PostMapping("/forgotPassword")
-    public String forgotPassword(@RequestParam String email, @RequestParam String newPassword, Model model) {
-        boolean isReset = userService.resetPassword(email, newPassword);
+//    @PostMapping("/forgotPassword")
+//    public String forgotPassword(@RequestParam String email, @RequestParam String newPassword, Model model) {
+//        boolean isReset = userService.resetPassword(email, newPassword);
+//
+//        if (!isReset) {
+//            model.addAttribute("error", "User not found.");
+//            return "forgot-password.jsp";
+//        }
+//
+//        model.addAttribute("successMessage", "Password reset successfully! You can now log in.");
+//        return "signin.jsp";
+//    }
 
-        if (!isReset) {
-            model.addAttribute("error", "User not found.");
-            return "forgot-password.jsp";
+
+        @RequestMapping("addUser")
+        public String addUser(UserDto dto, Model model) {
+
+            String generatedPassword = userService.generateRandomPassword();
+            System.out.println("Generated Password: " + generatedPassword);
+
+            boolean isValid = userService.saveUserWithPassword(dto, generatedPassword, model);
+
+            if (!isValid) {
+                return "sign-up.jsp";
+            }
+
+            model.addAttribute("name", dto.getName());
+            return "response.jsp";
         }
 
-        model.addAttribute("successMessage", "Password reset successfully! You can now log in.");
-        return "signin.jsp";
+        @PostMapping("/signIn")
+        public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
+            UserDto user = userService.authenticateUser(email, password);
+
+            if (user == null) {
+                model.addAttribute("error", "Invalid email or password.");
+                return "signin.jsp";
+            }
+
+            if (user.getFailedAttempts() >= 3) {
+                model.addAttribute("error", "Account locked due to multiple failed attempts.");
+                return "signin.jsp";
+            }
+
+            session.setAttribute("loggedInUserEmail", user.getEmail());
+            model.addAttribute("user", user);
+            return "welcome.jsp";
+        }
+
+        @PostMapping("/forgotPassword")
+        public String forgotPassword(@RequestParam String email, @RequestParam String newPassword, Model model) {
+            boolean isReset = userService.resetPassword(email, newPassword);
+
+            if (!isReset) {
+                model.addAttribute("error", "User not found.");
+                return "forgot-password.jsp";
+            }
+
+            model.addAttribute("successMessage", "Password reset successfully!");
+            return "signin.jsp";
+        }
     }
-
-
-
-
-}

@@ -14,11 +14,12 @@ public class UserDto {
     private String name;
     private String email;
     private String password;
-    private String confirmPassword;
+    private transient String confirmPassword;
     private String phoneNumber;
     private String location;
     private String gender;
     private String dOB;
     private Integer age;
+    private int failedAttempts;
 
 }

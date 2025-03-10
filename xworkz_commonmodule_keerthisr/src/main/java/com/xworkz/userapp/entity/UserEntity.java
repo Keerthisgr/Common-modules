@@ -24,8 +24,8 @@ public class UserEntity {
     private String name;
     private String email;
     private String password;
-    @Column(name = "confirm_password")
-    private String confirmPassword;
+//    @Column(name = "confirm_password")
+//    private String confirmPassword;
     @Column(name = "phone_number")
     private String phoneNumber;
     private String location;
@@ -37,4 +37,6 @@ public class UserEntity {
     private boolean accountLocked = false;
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime lockTime;
+
+
 }

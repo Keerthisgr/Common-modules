@@ -106,20 +106,7 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-6 form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
 
-                <div class="col-md-6 form-group">
-                    <label for="confirmPassword">Confirm Password:</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
-                    <c:if test="${not empty passwordError}">
-                        <p class="error-message">${passwordError}</p>
-                    </c:if>
-                </div>
-            </div>
 
             <div class="row">
                 <div class="col-md-6 form-group">
