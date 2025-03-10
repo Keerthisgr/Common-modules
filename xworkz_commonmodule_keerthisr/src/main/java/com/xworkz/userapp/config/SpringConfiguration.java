@@ -1,5 +1,6 @@
 package com.xworkz.userapp.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +18,11 @@ import java.util.Properties;
 @Configuration
 @ComponentScan("com.xworkz.userapp")
 @EnableTransactionManagement
+@Slf4j
 public class SpringConfiguration {
     public SpringConfiguration(){
-        System.out.println("Spring configuration constructor is invoked");
+//        System.out.println("Spring configuration constructor is invoked");
+        log.info("Spring Configuration constructor is invoked!!");
     }
 
     @Bean

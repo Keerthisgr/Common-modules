@@ -3,6 +3,7 @@ package com.xworkz.userapp.service;
 import com.xworkz.userapp.dto.UserDto;
 import com.xworkz.userapp.entity.UserEntity;
 import com.xworkz.userapp.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -14,7 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.regex.Pattern;
-
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -94,7 +95,8 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = repository.findByEmail(email);
 
         if (userEntity == null) {
-            System.out.println("User not found.");
+//            System.out.println("User not found.");
+            log.info("User not found");
             return null;
         }
 
@@ -102,10 +104,12 @@ public class UserServiceImpl implements UserService {
         if (userEntity.isAccountLocked()) {
             LocalDateTime lockedAt = userEntity.getLockTime();
             if (lockedAt != null && lockedAt.plusHours(24).isAfter(LocalDateTime.now())) {
-                System.out.println("Account is still locked.");
+//                System.out.println("Account is still locked.");
+                log.info("Account is still locked.");
                 return null;
             } else {
-                System.out.println("Unlocking account after 24 hours.");
+//                System.out.println("Unlocking account after 24 hours.");
+                log.info("Unlocking account after 24 hours.");
                 repository.resetAttempts(email);
             }
         }
@@ -113,18 +117,20 @@ public class UserServiceImpl implements UserService {
         // Check password
         if (!BCrypt.checkpw(password, userEntity.getPassword())) {
             int attempts = userEntity.getFailedAttempts() + 1;
-            System.out.println("Failed login attempt count: " + attempts);
+//            System.out.println("Failed login attempt count: " + attempts);
+            log.info("Failed login attempt count: " + attempts);
 
             if (attempts >= 3) {
-                System.out.println("Locking account...");
+//                System.out.println("Locking account...");
+                log.info("Locking account...");
                 repository.lockAccount(email, LocalDateTime.now());
             } else {
                 repository.updateFailedAttempts(email, attempts);
             }
             return null;
         }
-
-        System.out.println("Resetting failed attempts on successful login.");
+        log.info("Resetting failed attempts on successful login");
+//        System.out.println("Resetting failed attempts on successful login.");
         repository.resetAttempts(email);
 
         UserDto userDto = new UserDto();
@@ -145,7 +151,8 @@ public class UserServiceImpl implements UserService {
         try {
             BeanUtils.copyProperties(dto, userEntity);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            System.out.println("Error copying properties: " + e.getMessage());
+//            System.out.println("Error copying properties: " + e.getMessage());
+            log.info("Error copying properties: " + e.getMessage());
         }
         return dto;
     }
