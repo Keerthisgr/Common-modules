@@ -13,4 +13,10 @@ public interface UserRepository {
     void lockAccount(String email, LocalDateTime lockTime);
     void resetAttempts(String email);
     void updatePassword(String email, String newPassword);
+    boolean existsByNameEmailOrPhone(String name, String email, String phoneNumber);
+    void updateProfile(UserEntity userEntity);
+    boolean existsByPhone(String phoneNumber);
+    boolean existsByName(String name);
+    boolean existsByEmail(String email);
+    boolean deleteByEmail(String email);
 }

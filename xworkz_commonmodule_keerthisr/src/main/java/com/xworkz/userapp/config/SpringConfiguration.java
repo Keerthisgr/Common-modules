@@ -8,7 +8,6 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -21,10 +20,8 @@ import java.util.Properties;
 @Slf4j
 public class SpringConfiguration {
     public SpringConfiguration(){
-//        System.out.println("Spring configuration constructor is invoked");
         log.info("Spring Configuration constructor is invoked!!");
     }
-
     @Bean
     public LocalContainerEntityManagerFactoryBean getLocalContainerEntityManagerFactoryBean(){
         LocalContainerEntityManagerFactoryBean bean = new LocalContainerEntityManagerFactoryBean();
@@ -34,7 +31,6 @@ public class SpringConfiguration {
         bean.setJpaProperties(getProperties());
         return bean;
     }
-
     private Properties getProperties(){
         Properties properties = new Properties();
         properties.setProperty("show_sql","true");
@@ -42,7 +38,6 @@ public class SpringConfiguration {
         properties.setProperty("spring.jpa.database-platform","org.hibernate.dialect.MySQL8Dialect");
         return properties;
     }
-
     @Bean
     public DataSource getDataSource(){
         DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource();
@@ -53,7 +48,6 @@ public class SpringConfiguration {
         return driverManagerDataSource;
 
     }
-
     @Bean
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);

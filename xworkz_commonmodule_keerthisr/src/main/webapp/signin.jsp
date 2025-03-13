@@ -83,6 +83,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="index.jsp">Home</a>
                 </li>
+                 <li class="nav-item">
+                                    <a class="nav-link" href="delete-user.jsp">Delete</a>
+                                </li>
 
             </ul>
         </div>
@@ -94,9 +97,19 @@
     <h2 class="text-center">Sign In</h2>
 
 
-    <c:if test="${not empty error}">
-        <p class="error-message text-center">${error}</p>
-    </c:if>
+<c:if test="${not empty requestScope.error}">
+    <p class="error-message">${requestScope.error}</p>
+</c:if>
+
+<c:if test="${not empty requestScope.errorAttempts}">
+    <p class="error-message">${requestScope.errorAttempts}</p>
+</c:if>
+
+<c:if test="${not empty requestScope.errorLock}">
+    <p class="error-message">${requestScope.errorLock}</p>
+</c:if>
+
+
 
     <form action="signIn" method="post">
         <div class="mb-3">

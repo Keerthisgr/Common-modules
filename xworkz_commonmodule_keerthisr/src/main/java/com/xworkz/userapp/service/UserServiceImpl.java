@@ -6,15 +6,22 @@ import com.xworkz.userapp.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
 import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.util.Properties;
+
 @Slf4j
 @Service
 public class UserServiceImpl implements UserService {
@@ -22,9 +29,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository repository;
 
-    // Generates a random password
+
     public String generateRandomPassword() {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@$!%*?&";
         StringBuilder password = new StringBuilder();
         Random rnd = new Random();
         for (int i = 0; i < 8; i++) {
@@ -33,95 +40,118 @@ public class UserServiceImpl implements UserService {
         return password.toString();
     }
 
+
+    @Override
+    public String encryption(String password) {
+        StringBuilder encrypt = new StringBuilder();
+        for (char ch : password.toCharArray()) {
+            encrypt.append((char) (ch + 3));
+        }
+        return encrypt.toString();
+    }
+
+
+    @Override
+    public String matchPassword(String encryptedPassword) {
+        StringBuilder decrypt = new StringBuilder();
+        for (char ch : encryptedPassword.toCharArray()) {
+            decrypt.append((char) (ch - 3));
+        }
+        return decrypt.toString();
+    }
+
     @Override
     public boolean validateAndUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
-        boolean errors = false;
+        boolean hasErrors = false;
 
         if (dto == null) {
             model.addAttribute("error", "User details cannot be null.");
             return false;
         }
 
+        // Name validation
         String nameRegex = "^[A-Z][a-zA-Z ]{2,49}$";
         Pattern namePattern = Pattern.compile(nameRegex);
         if (dto.getName() == null || !namePattern.matcher(dto.getName()).matches()) {
-            model.addAttribute("nameError", "Invalid Name: Must start with an uppercase letter and contain only letters and spaces.");
-            errors = true;
+            model.addAttribute("nameError", "Invalid Name");
+            hasErrors = true;
         }
 
+        // Phone number validation
         String phoneRegex = "^[9876]\\d{9}$";
         Pattern phonePattern = Pattern.compile(phoneRegex);
         if (dto.getPhoneNumber() == null || !phonePattern.matcher(String.valueOf(dto.getPhoneNumber())).matches()) {
             model.addAttribute("phoneError", "Invalid Phone Number");
-            errors = true;
+            hasErrors = true;
         }
 
-        String emailRegex = "^(?=.*[!@#$%^&*])[a-z0-9]+@gmail\\.com$";
+
+
+        // Email validation
+        String emailRegex = "^[a-z0-9]+@gmail\\.com$";
         Pattern emailPattern = Pattern.compile(emailRegex);
         if (dto.getEmail() == null || !emailPattern.matcher(dto.getEmail()).matches()) {
-            model.addAttribute("emailError", "Invalid Email");
-            errors = true;
+            model.addAttribute("emailError", "Invalid Email:(example@gmail.com).");
+            hasErrors = true;
         }
 
-        if (errors) {
+        // Age validation
+        if (dto.getAge() > 95) {
+            model.addAttribute("ageError", "Invalid Age: Age must be 95 or below.");
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
             return false;
         }
 
-        // Generate, print, encrypt password
+        // Generate and encrypt password
         String generatedPassword = generateRandomPassword();
-        System.out.println("Generated Password for " + dto.getEmail() + " is: " + generatedPassword);
+        dto.setPassword(encryption(generatedPassword));
 
         UserEntity entity = new UserEntity();
         BeanUtils.copyProperties(entity, dto);
-        entity.setPassword(encryptPassword(generatedPassword));
-        entity.setFailedAttempts(-1);
+        entity.setPassword(encryption(generatedPassword));
+        entity.setFailedAttempts(0);
 
+        boolean saved = saveEmail(dto.getEmail(),generatedPassword);
+        if(saved){
+            System.out.println("Email sent");
+        }
         repository.saveUser(entity);
         return true;
     }
 
-    @Override
-    public String encryptPassword(String password) {
-        return BCrypt.hashpw(password, BCrypt.gensalt(12));
-    }
-
-    @Override
-    public boolean matchPassword(String enteredPassword, String storedHash) {
-        return BCrypt.checkpw(enteredPassword, storedHash);
-    }
 
     @Override
     public UserDto authenticateUser(String email, String password) {
         UserEntity userEntity = repository.findByEmail(email);
 
         if (userEntity == null) {
-//            System.out.println("User not found.");
             log.info("User not found");
             return null;
         }
 
-        // Check if account is locked
+
         if (userEntity.isAccountLocked()) {
             LocalDateTime lockedAt = userEntity.getLockTime();
             if (lockedAt != null && lockedAt.plusHours(24).isAfter(LocalDateTime.now())) {
-//                System.out.println("Account is still locked.");
                 log.info("Account is still locked.");
                 return null;
             } else {
-//                System.out.println("Unlocking account after 24 hours.");
                 log.info("Unlocking account after 24 hours.");
                 repository.resetAttempts(email);
             }
         }
 
-        // Check password
-        if (!BCrypt.checkpw(password, userEntity.getPassword())) {
+
+        String decryptedPassword = matchPassword(userEntity.getPassword());
+
+        if (!password.equals(decryptedPassword)) {
             int attempts = userEntity.getFailedAttempts() + 1;
-//            System.out.println("Failed login attempt count: " + attempts);
             log.info("Failed login attempt count: " + attempts);
 
             if (attempts >= 3) {
-//                System.out.println("Locking account...");
                 log.info("Locking account...");
                 repository.lockAccount(email, LocalDateTime.now());
             } else {
@@ -129,8 +159,8 @@ public class UserServiceImpl implements UserService {
             }
             return null;
         }
-        log.info("Resetting failed attempts on successful login");
-//        System.out.println("Resetting failed attempts on successful login.");
+
+        log.info("Resetting failed attempts on successful login.");
         repository.resetAttempts(email);
 
         UserDto userDto = new UserDto();
@@ -143,22 +173,113 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public boolean resetPassword(String email, String newPassword) {
+        UserEntity userEntity = repository.findByEmail(email);
+        if (userEntity == null) {
+            log.warn("User not found: " + email);
+            return false;
+        }
+
+        // Encrypt the new password
+        String encryptedPassword = encryption(newPassword);
+        repository.updatePassword(email, encryptedPassword);
+        repository.resetAttempts(email);
+
+        log.info("Password reset successfully for " + email);
+        return true;
+    }
+
+    @Override
+    public boolean saveUserWithPassword(UserDto dto, String password, Model model) {
+        if (repository.existsByNameEmailOrPhone(dto.getName(), dto.getEmail(), dto.getPhoneNumber())) {
+            if (repository.existsByEmail(dto.getEmail())) {
+                model.addAttribute("emailError", "Email already exists.");
+            }
+            if (repository.existsByName(dto.getName())) {
+                model.addAttribute("nameError", "Name already exists.");
+            }
+            if (repository.existsByPhone(dto.getPhoneNumber())) {
+                model.addAttribute("phoneError", "Phone number already exists.");
+            }
+            return false;
+        }
+
+        String encryptedPassword = encryption(password);
+        UserEntity entity = new UserEntity();
+        entity.setEmail(dto.getEmail());
+        entity.setName(dto.getName());
+        entity.setPassword(encryptedPassword);
+        entity.setPhoneNumber(dto.getPhoneNumber());
+        entity.setLocation(dto.getLocation());
+        entity.setAge(dto.getAge());
+        entity.setDOB(dto.getDOB());
+        entity.setGender(dto.getGender());
+        entity.setFailedAttempts(-1);
+
+
+        repository.saveUser(entity);
+        return true;
+    }
+
+
+    @Override
+    public String validateAndLogIn(String email, String password) {
+        log.info("Validating login for: " + email);
+
+
+        UserEntity entity = repository.findByEmail(email);
+        if (entity == null) {
+            return "Invalid email";
+        }
+
+        if (entity.isAccountLocked()) {
+            if (Duration.between(entity.getLockTime(), Instant.now()).toHours() >= 24) {
+                entity.setAccountLocked(false);
+                entity.setFailedAttempts(0);
+                repository.updateProfile(entity);
+            } else {
+                return "Account is locked. Try again after 24 hours.";
+            }
+        }
+
+        String decryptedPassword = matchPassword(entity.getPassword());
+
+        if (password.equals(decryptedPassword)) {
+            entity.setFailedAttempts(0);
+            repository.updateProfile(entity);
+            return "isPresent";
+        } else {
+            int attempts = entity.getFailedAttempts() + 1;
+            entity.setFailedAttempts(attempts);
+
+            if (attempts >= 3) {
+                entity.setAccountLocked(true);
+            }
+
+            repository.updateProfile(entity);
+            return (attempts == 3) ? "Account is locked for 24 hours." : "Invalid password. Attempts left: " + (3 - attempts);
+        }
+    }
+
+    @Override
     public UserDto getUserByEmail(String email) {
         UserEntity userEntity = repository.findByEmail(email);
-        if (userEntity == null) return null;
+
+        if (userEntity == null) {
+            return null;
+        }
 
         UserDto dto = new UserDto();
         try {
             BeanUtils.copyProperties(dto, userEntity);
         } catch (IllegalAccessException | InvocationTargetException e) {
-//            System.out.println("Error copying properties: " + e.getMessage());
-            log.info("Error copying properties: " + e.getMessage());
+            log.error("Error copying properties: " + e.getMessage());
         }
         return dto;
     }
-
-    @Transactional
     @Override
+    @Transactional
     public boolean updateUserByEmail(String email, UserDto dto, Model model) {
         UserEntity existingUser = repository.findByEmail(email);
         if (existingUser == null) {
@@ -168,7 +289,7 @@ public class UserServiceImpl implements UserService {
 
         String newPassword = existingUser.getPassword();
         if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-            newPassword = encryptPassword(dto.getPassword());
+            newPassword = encryption(dto.getPassword());
         }
 
         int rowsUpdated = repository.updateByEmail(
@@ -188,47 +309,67 @@ public class UserServiceImpl implements UserService {
             return false;
         }
     }
+        public boolean saveEmail(String email, String generatedPassword) {
+            final String username = "keerthisr.xworkz@gmail.com";
+            final String password = "kplz dnjm fkit xufm";
+
+            Properties prop = new Properties();
+            prop.put("mail.smtp.host", "smtp.gmail.com");
+            prop.put("mail.smtp.port", "587");
+            prop.put("mail.smtp.auth", "true");
+            prop.put("mail.smtp.starttls.enable", "true");
+
+            Session session = Session.getInstance(prop, new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(username, password);
+                }
+            });
+
+            try {
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(username));
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));
+                message.setSubject("Email Verification");
+                message.setText("Dear User, your password is: " + generatedPassword);
+                Transport.send(message);
+                System.out.println("Done"+email);
+            } catch (MessagingException e) {
+                e.printStackTrace();
+
+            }return false;
+        }
 
     @Override
-    @Transactional
-    public boolean resetPassword(String email, String newPassword) {
+    public boolean isPasswordCorrect(String email, String enteredPassword) {
         UserEntity userEntity = repository.findByEmail(email);
         if (userEntity == null) {
-            System.out.println("User not found for email: " + email);
+            return false;
+        }
+        String decryptedPassword = matchPassword(userEntity.getPassword());
+        return decryptedPassword.equals(enteredPassword);
+    }
+    @Override
+    @Transactional
+    public void resetFailedAttempts(String email) {
+        repository.resetAttempts(email);
+    }
+
+    @Override
+    public boolean deleteUserByEmail(String email, Model model) {
+        UserEntity userEntity = repository.findByEmail(email);
+        if (userEntity == null) {
+            model.addAttribute("error", "User not found with email: " + email);
             return false;
         }
 
-        String encryptedPassword = encryptPassword(newPassword);
-        repository.updatePassword(email, encryptedPassword);
-        repository.resetAttempts(email);
-
-        System.out.println("Password reset successfully for " + email);
-        return true;
+        boolean isDeleted = repository.deleteByEmail(email);
+        if (isDeleted) {
+            model.addAttribute("successMessage", "User deleted successfully.");
+            return true;
+        } else {
+            model.addAttribute("error", "Failed to delete user.");
+            return false;
+        }
+    }
     }
 
-    @Override
-    public boolean saveUserWithPassword(UserDto dto, String password, Model model) {
-
-
-        String generatedPassword = generateRandomPassword();
-        System.out.println("Generated Password for " + dto.getEmail() + " is: " + generatedPassword);
-
-
-        UserEntity entity = new UserEntity();
-        entity.setEmail(dto.getEmail());
-        entity.setName(dto.getName());
-        entity.setPassword(encryptPassword(generatedPassword));
-        entity.setPhoneNumber(dto.getPhoneNumber());
-        entity.setLocation(dto.getLocation());
-        entity.setAge(dto.getAge());
-        entity.setDOB(dto.getDOB());
-        entity.setGender(dto.getGender());
-        entity.setFailedAttempts(-1);
-
-
-        repository.saveUser(entity);
-        return true;
-
-    }
-
-}

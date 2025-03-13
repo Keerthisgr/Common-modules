@@ -35,23 +35,25 @@ public class UserRepositoryImpl implements UserRepository{
 
     @Override
     public UserEntity findByEmail(String email) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
         try {
-            EntityManager entityManager = entityManagerFactory.createEntityManager();
             return entityManager.createQuery(
                             "SELECT u FROM UserEntity u WHERE u.email = :email", UserEntity.class)
                     .setParameter("email", email)
                     .getSingleResult();
         } catch (Exception e) {
-            return null;
+            return null; // Return null if user not found
+        } finally {
+            entityManager.close();
         }
     }
 
+
     @Override
-//    @Transactional
+    @Transactional
     public int updateByEmail(String email, String name, String phoneNumber, String location, int age, String password) {
-        System.out.println("Repo updateByEmail started");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
-        int noOfRowsUpdated = 0;
+        int rowsUpdated = 0;
         try {
             entityManager.getTransaction().begin();
             Query query = entityManager.createQuery(
@@ -64,19 +66,20 @@ public class UserRepositoryImpl implements UserRepository{
             query.setParameter("age", age);
             query.setParameter("password", password);
             query.setParameter("email", email);
-            noOfRowsUpdated = query.executeUpdate();
-            System.out.println("noOfRowsUpdated: " + noOfRowsUpdated);
+
+            rowsUpdated = query.executeUpdate();
             entityManager.getTransaction().commit();
-
         } catch (Exception e) {
-            System.out.println("error in repo " + e.getMessage());
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            System.out.println("Error updating user: " + e.getMessage());
         } finally {
-            if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();
+            entityManager.close();
         }
-        System.out.println("Repo updateByEmail ended");
-        return noOfRowsUpdated;
-
+        return rowsUpdated;
     }
+
 
 
     @Override
@@ -125,4 +128,107 @@ public class UserRepositoryImpl implements UserRepository{
         entityManager.getTransaction().commit();
         entityManager.close();
     }
+    @Override
+    public boolean existsByNameEmailOrPhone(String name, String email, String phoneNumber) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        boolean exists = false;
+        try {
+            Query query = entityManager.createQuery(
+                    "SELECT COUNT(u) FROM UserEntity u WHERE u.name = :name OR u.email = :email OR u.phoneNumber = :phoneNumber"
+            );
+            query.setParameter("name", name);
+            query.setParameter("email", email);
+            query.setParameter("phoneNumber", phoneNumber);
+
+            Long count = (Long) query.getSingleResult();
+            exists = count > 0;
+        } catch (Exception e) {
+            System.out.println("Error checking existing user: " + e.getMessage());
+        } finally {
+            entityManager.close();
+        }
+        return exists;
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        try {
+            Query query = entityManager.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.email = :email");
+            query.setParameter("email", email);
+            return (Long) query.getSingleResult() > 0;
+        } finally {
+            entityManager.close();
+        }
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        try {
+            Query query = entityManager.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.name = :name");
+            query.setParameter("name", name);
+            return (Long) query.getSingleResult() > 0;
+        } finally {
+            entityManager.close();
+        }
+    }
+
+    @Override
+    public boolean existsByPhone(String phoneNumber) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        try {
+            Query query = entityManager.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.phoneNumber = :phoneNumber");
+            query.setParameter("phoneNumber", phoneNumber);
+            return (Long) query.getSingleResult() > 0;
+        } finally {
+            entityManager.close();
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateProfile(UserEntity userEntity) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        try {
+            entityManager.getTransaction().begin();
+            entityManager.createQuery(
+                            "UPDATE UserEntity u SET u.failedAttempts = :failedAttempts, u.accountLocked = :accountLocked, u.lockTime = :lockTime WHERE u.email = :email"
+                    )
+                    .setParameter("failedAttempts", userEntity.getFailedAttempts())
+                    .setParameter("accountLocked", userEntity.isAccountLocked())
+                    .setParameter("lockTime", userEntity.isAccountLocked() ? userEntity.getLockTime() : null)
+                    .setParameter("email", userEntity.getEmail())
+                    .executeUpdate();
+            entityManager.getTransaction().commit();
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            System.out.println("Error updating user profile: " + e.getMessage());
+        } finally {
+            entityManager.close();
+        }
+    }
+    @Override
+    @Transactional
+    public boolean deleteByEmail(String email) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        try {
+            entityManager.getTransaction().begin();
+            Query query = entityManager.createQuery("DELETE FROM UserEntity u WHERE u.email = :email");
+            query.setParameter("email", email);
+            int rowsDeleted = query.executeUpdate();
+            entityManager.getTransaction().commit();
+            return rowsDeleted > 0;
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            return false;
+        } finally {
+            entityManager.close();
+        }
+    }
+
 }

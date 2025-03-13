@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=US-ASCII" pageEncoding="US-ASCII"%>
 <%@ page isELIgnored="false" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -76,42 +77,41 @@
     </div>
 </nav>
 
-
 <div class="container mt-5">
     <div class="form-container">
         <h2 class="text-center">User Registration</h2>
 
-
         <c:if test="${not empty successMessage}">
             <p class="text-success text-center">${successMessage}</p>
+        </c:if>
+
+        <c:if test="${not empty error}">
+            <p class="error-message text-center">${error}</p>
         </c:if>
 
         <form action="addUser" method="post">
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" class="form-control" value="${param.name}" required>
+                    <input type="text" id="name" name="name" class="form-control" value="${name}" required>
                     <c:if test="${not empty nameError}">
                         <p class="error-message">${nameError}</p>
                     </c:if>
                 </div>
 
-
                 <div class="col-md-6 form-group">
                     <label for="email">Email:</label>
-                    <input type="text" id="email" name="email" class="form-control" value="${param.email}" required>
+                    <input type="text" id="email" name="email" class="form-control" value="${email}" required>
                     <c:if test="${not empty emailError}">
                         <p class="error-message">${emailError}</p>
                     </c:if>
                 </div>
             </div>
 
-
-
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="phoneNumber">Phone Number:</label>
-                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="${param.phoneNumber}" required>
+                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="${phoneNumber}" required>
                     <c:if test="${not empty phoneError}">
                         <p class="error-message">${phoneError}</p>
                     </c:if>
@@ -151,7 +151,10 @@
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="age">Age:</label>
-                    <input type="text" id="age" name="age" class="form-control" value="${param.age}" required>
+                    <input type="text" id="age" name="age" class="form-control" value="${age}" required>
+                    <c:if test="${not empty ageError}">
+                        <p class="error-message">${ageError}</p>
+                    </c:if>
                 </div>
             </div>
 
@@ -159,7 +162,6 @@
                 <input type="submit" value="SUBMIT" class="btn btn-success">
             </div>
         </form>
-
 
     </div>
 </div>

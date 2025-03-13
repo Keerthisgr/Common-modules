@@ -24,19 +24,14 @@ public class UserEntity {
     private String name;
     private String email;
     private String password;
-//    @Column(name = "confirm_password")
-//    private String confirmPassword;
     @Column(name = "phone_number")
     private String phoneNumber;
     private String location;
     private String gender;
     private String dOB;
     private Integer age;
-
-    private int failedAttempts = 0;
+    private int failedAttempts = -1;
     private boolean accountLocked = false;
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime lockTime;
-
-
 }

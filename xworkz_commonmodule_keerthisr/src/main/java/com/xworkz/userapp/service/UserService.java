@@ -3,25 +3,20 @@ package com.xworkz.userapp.service;
 import com.xworkz.userapp.dto.UserDto;
 import org.springframework.ui.Model;
 
-import java.lang.reflect.InvocationTargetException;
-
 public interface UserService {
 
     String generateRandomPassword();
-
-    boolean validateAndUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException;
-
-    String encryptPassword(String password);
-
-    boolean matchPassword(String enteredPassword, String storedHash);
-
+    String encryption(String password);
+    String matchPassword(String encryptedPassword);
+    boolean validateAndUser(UserDto dto, Model model) throws Exception;
     UserDto authenticateUser(String email, String password);
-
-    UserDto getUserByEmail(String email);
-
-    boolean updateUserByEmail(String email, UserDto dto, Model model);
-
     boolean resetPassword(String email, String newPassword);
-
     boolean saveUserWithPassword(UserDto dto, String password, Model model);
+    String validateAndLogIn(String email, String password);
+    UserDto getUserByEmail(String email);
+    boolean updateUserByEmail(String email, UserDto dto, Model model);
+    boolean deleteUserByEmail(String email, Model model);
+    boolean isPasswordCorrect(String email, String password);
+    void resetFailedAttempts(String email);
+
 }

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-import java.lang.reflect.InvocationTargetException;
 
 @Component
 @RequestMapping("/")
@@ -23,38 +22,6 @@ public class UserController {
 
     @Autowired
     UserService userService;
-//
-//    @RequestMapping("addUser")
-//    public String addUser(UserDto dto, Model model) throws InvocationTargetException, IllegalAccessException {
-//
-//        boolean isValid = userService.validateAndUser(dto, model);
-//
-//        if (!isValid) {
-//            return "sign-in.jsp";
-//        }
-//
-//        model.addAttribute("name", dto.getName());
-//        return "response.jsp";
-//    }
-//    @PostMapping("/signIn")
-//    public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
-//        UserDto user = userService.getPasswordByEmail(email, password);
-//
-//        if (user == null) {
-//            model.addAttribute("error", "Invalid email or password.");
-//            return "signin.jsp";
-//        }
-//
-//
-//
-//        session.setAttribute("loggedInUserEmail", user.getEmail());
-//
-//        model.addAttribute("user", user);
-//        return "welcome.jsp";
-//    }
-
-
-
 
 @GetMapping("/editProfile")
 public String editProfile(HttpSession session, Model model) {
@@ -100,56 +67,61 @@ public String editProfile(HttpSession session, Model model) {
         return "update-profile.jsp";
     }
 
-//    @PostMapping("/forgotPassword")
-//    public String forgotPassword(@RequestParam String email, @RequestParam String newPassword, Model model) {
-//        boolean isReset = userService.resetPassword(email, newPassword);
-//
-//        if (!isReset) {
-//            model.addAttribute("error", "User not found.");
-//            return "forgot-password.jsp";
-//        }
-//
-//        model.addAttribute("successMessage", "Password reset successfully! You can now log in.");
-//        return "signin.jsp";
-//    }
 
+    @RequestMapping("addUser")
+    public String addUser(UserDto dto, Model model) throws Exception {
+        boolean isValid = userService.validateAndUser(dto, model);
 
-        @RequestMapping("addUser")
-        public String addUser(UserDto dto, Model model) {
-
-            String generatedPassword = userService.generateRandomPassword();
-            System.out.println("Generated Password: " + generatedPassword);
-
-            boolean isValid = userService.saveUserWithPassword(dto, generatedPassword, model);
-
-            if (!isValid) {
-                return "sign-up.jsp";
-            }
-
-            model.addAttribute("name", dto.getName());
-            return "response.jsp";
+        if (!isValid) {
+            return "sign-in.jsp";
         }
 
-        @PostMapping("/signIn")
-        public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
-            UserDto user = userService.authenticateUser(email, password);
 
-            if (user == null) {
-                model.addAttribute("error", "Invalid email or password.");
-                return "signin.jsp";
-            }
+        String generatedPassword = userService.generateRandomPassword();
+        System.out.println("Generated Password: " + generatedPassword);
 
-            if (user.getFailedAttempts() >= 3) {
-                model.addAttribute("error", "Account locked due to multiple failed attempts.");
-                return "signin.jsp";
-            }
+        boolean isSaved = userService.saveUserWithPassword(dto, generatedPassword, model);
 
-            session.setAttribute("loggedInUserEmail", user.getEmail());
-            model.addAttribute("user", user);
-            return "welcome.jsp";
+        if (!isSaved) {
+            return "sign-in.jsp";
         }
 
-        @PostMapping("/forgotPassword")
+        model.addAttribute("name", dto.getName());
+        return "response.jsp";
+    }
+
+
+    @PostMapping("/signIn")
+    public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
+        UserDto user = userService.authenticateUser(email, password);
+
+        if (user == null) {
+            model.addAttribute("error", "Invalid email or password.");
+            return "signin.jsp";
+        }
+
+        if (user.getFailedAttempts() >= 3) {
+            model.addAttribute("errorAttempts", "Account locked due to multiple failed attempts. Please try again after 24 hours.");
+            return "signin.jsp";
+        }
+
+        if (!userService.isPasswordCorrect(email, password)) {
+            int remainingAttempts = 2 - user.getFailedAttempts();
+            if (remainingAttempts >= 0) {
+                model.addAttribute("errorLock", "Invalid password. Attempts left: " + remainingAttempts);
+            } else {
+                model.addAttribute("errorLock", "Your account is now locked due to multiple failed attempts. Please try again after 24 hours.");
+            }
+            return "signin.jsp";
+        }
+
+        userService.resetFailedAttempts(email);
+        session.setAttribute("loggedInUserEmail", user.getEmail());
+        model.addAttribute("user", user);
+        return "welcome.jsp";
+    }
+
+    @PostMapping("/forgotPassword")
         public String forgotPassword(@RequestParam String email, @RequestParam String newPassword, Model model) {
             boolean isReset = userService.resetPassword(email, newPassword);
 
@@ -161,4 +133,17 @@ public String editProfile(HttpSession session, Model model) {
             model.addAttribute("successMessage", "Password reset successfully!");
             return "signin.jsp";
         }
+
+    @GetMapping("/deleteUser")
+    public String deleteUser(@RequestParam String email, Model model) {
+        boolean isDeleted = userService.deleteUserByEmail(email, model);
+
+        if (isDeleted) {
+            model.addAttribute("successMessage", "User deleted successfully.");
+        } else {
+            model.addAttribute("error", "User not found or deletion failed.");
+        }
+
+        return "delete-user.jsp";
+    }
     }

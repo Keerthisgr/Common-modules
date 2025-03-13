@@ -92,9 +92,9 @@
 
 <!-- Welcome Message -->
 <div class="welcome-container">
-    <h2>Welcome ${user.name}!</h2>
-    <p>You have successfully logged in!</p>
-    <a href="logout.jsp" class="btn-logout">Logout</a>
+    <h2>Thank you</h2>
+    <p>Logged out!!</p>
+    <a href="index.jsp" class="btn-logout">Logout</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
