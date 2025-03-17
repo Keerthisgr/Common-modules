@@ -8,6 +8,8 @@
     <meta charset="UTF-8">
     <title>User Registration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="signin-validation.js"></script>
+
     <style>
       body {
           font-family: Arial, sans-serif;

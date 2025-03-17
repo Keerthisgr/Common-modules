@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
+import java.util.Random;
 
 @Component
 @RequestMapping("/")
@@ -76,7 +77,6 @@ public String editProfile(HttpSession session, Model model) {
             return "sign-in.jsp";
         }
 
-
         String generatedPassword = userService.generateRandomPassword();
         System.out.println("Generated Password: " + generatedPassword);
 
@@ -92,7 +92,14 @@ public String editProfile(HttpSession session, Model model) {
 
 
     @PostMapping("/signIn")
-    public String signIn(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
+    public String signIn(@RequestParam String email, @RequestParam String password, @RequestParam String captcha,Model model, HttpSession session) {
+        String sessionCaptcha = (String) session.getAttribute("captcha");
+
+        if (!captcha.equalsIgnoreCase(sessionCaptcha)) {
+            model.addAttribute("error", "Invalid CAPTCHA. Try again.");
+            session.setAttribute("captcha", generateCaptcha());
+            return "signin.jsp";
+        }
         UserDto user = userService.authenticateUser(email, password);
 
         if (user == null) {
@@ -118,7 +125,18 @@ public String editProfile(HttpSession session, Model model) {
         userService.resetFailedAttempts(email);
         session.setAttribute("loggedInUserEmail", user.getEmail());
         model.addAttribute("user", user);
+        session.removeAttribute("captcha"); // Remove CAPTCHA after success
         return "welcome.jsp";
+    }
+    private String generateCaptcha() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        StringBuilder captcha = new StringBuilder();
+        Random random = new Random();
+
+        for (int i = 0; i < 6; i++) {
+            captcha.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return captcha.toString();
     }
 
     @PostMapping("/forgotPassword")

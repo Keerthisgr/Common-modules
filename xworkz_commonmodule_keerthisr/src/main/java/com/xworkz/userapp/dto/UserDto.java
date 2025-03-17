@@ -1,5 +1,6 @@
 package com.xworkz.userapp.dto;
 
+import com.xworkz.userapp.constant.Location;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -16,7 +17,7 @@ public class UserDto {
     private String password;
     private transient String confirmPassword;
     private String phoneNumber;
-    private String location;
+    private Location location;
     private String gender;
     private String dOB;
     private Integer age;

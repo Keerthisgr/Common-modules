@@ -126,6 +126,10 @@
                 <p class="error-message">${passwordError}</p>
             </c:if>
         </div>
+            <div class="mb-3 text-center">
+                <label for="captcha">Enter CAPTCHA: <strong>${sessionScope.captcha}</strong></label>
+                <input type="text" id="captcha" name="captcha" class="form-control" required>
+       </div>
         <div class="text-center">
             <input type="submit" value="SIGN IN" class="btn btn-primary">
         </div>

@@ -192,31 +192,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean saveUserWithPassword(UserDto dto, String password, Model model) {
-        if (repository.existsByNameEmailOrPhone(dto.getName(), dto.getEmail(), dto.getPhoneNumber())) {
-            if (repository.existsByEmail(dto.getEmail())) {
-                model.addAttribute("emailError", "Email already exists.");
-            }
-            if (repository.existsByName(dto.getName())) {
-                model.addAttribute("nameError", "Name already exists.");
-            }
-            if (repository.existsByPhone(dto.getPhoneNumber())) {
-                model.addAttribute("phoneError", "Phone number already exists.");
-            }
-            return false;
+        boolean exists = false;
+
+        if (repository.existsByEmail(dto.getEmail())) {
+            model.addAttribute("emailError", "Email already exists.");
+            exists = true;
+        }
+        if (repository.existsByName(dto.getName())) {
+            model.addAttribute("nameError", "Name already exists.");
+            exists = true;
+        }
+        if (repository.existsByPhone(dto.getPhoneNumber())) {
+            model.addAttribute("phoneError", "Phone number already exists.");
+            exists = true;
         }
 
+        if (exists) {
+            return false; // Stop execution if any of the fields already exist.
+        }
+
+        // Encrypt password before saving
         String encryptedPassword = encryption(password);
         UserEntity entity = new UserEntity();
         entity.setEmail(dto.getEmail());
         entity.setName(dto.getName());
         entity.setPassword(encryptedPassword);
         entity.setPhoneNumber(dto.getPhoneNumber());
-        entity.setLocation(dto.getLocation());
+        entity.setLocation(String.valueOf(dto.getLocation()));
         entity.setAge(dto.getAge());
         entity.setDOB(dto.getDOB());
         entity.setGender(dto.getGender());
         entity.setFailedAttempts(-1);
-
 
         repository.saveUser(entity);
         return true;
@@ -278,6 +284,8 @@ public class UserServiceImpl implements UserService {
         }
         return dto;
     }
+
+
     @Override
     @Transactional
     public boolean updateUserByEmail(String email, UserDto dto, Model model) {
@@ -296,7 +304,7 @@ public class UserServiceImpl implements UserService {
                 email,
                 dto.getName(),
                 String.valueOf(dto.getPhoneNumber()),
-                dto.getLocation(),
+                String.valueOf(dto.getLocation()),
                 dto.getAge(),
                 newPassword
         );
