@@ -115,6 +115,7 @@ public class UserServiceImpl implements UserService {
         entity.setFailedAttempts(0);
 
         boolean saved = saveEmail(dto.getEmail(),generatedPassword);
+        System.out.println("Generated Password in service: " + generatedPassword);
         if(saved){
             System.out.println("Email sent");
         }
@@ -218,7 +219,7 @@ public class UserServiceImpl implements UserService {
         entity.setName(dto.getName());
         entity.setPassword(encryptedPassword);
         entity.setPhoneNumber(dto.getPhoneNumber());
-        entity.setLocation(String.valueOf(dto.getLocation()));
+        entity.setLocation(dto.getLocation());
         entity.setAge(dto.getAge());
         entity.setDOB(dto.getDOB());
         entity.setGender(dto.getGender());
@@ -340,7 +341,7 @@ public class UserServiceImpl implements UserService {
                 message.setSubject("Email Verification");
                 message.setText("Dear User, your password is: " + generatedPassword);
                 Transport.send(message);
-                System.out.println("Done"+email);
+                System.out.println("Email sent: "+email);
             } catch (MessagingException e) {
                 e.printStackTrace();
 
@@ -360,6 +361,11 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void resetFailedAttempts(String email) {
         repository.resetAttempts(email);
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        return repository.existsByName(name);
     }
 
     @Override

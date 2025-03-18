@@ -1,5 +1,6 @@
 package com.xworkz.userapp.entity;
 
+import com.xworkz.userapp.constant.Location;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +27,7 @@ public class UserEntity {
     private String password;
     @Column(name = "phone_number")
     private String phoneNumber;
-    private String location;
+    private Location location;
     private String gender;
     private String dOB;
     private Integer age;

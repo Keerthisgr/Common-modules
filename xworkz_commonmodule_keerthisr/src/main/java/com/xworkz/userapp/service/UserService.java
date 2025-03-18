@@ -18,5 +18,7 @@ public interface UserService {
     boolean deleteUserByEmail(String email, Model model);
     boolean isPasswordCorrect(String email, String password);
     void resetFailedAttempts(String email);
+    boolean existsByName(String name);
+
 
 }

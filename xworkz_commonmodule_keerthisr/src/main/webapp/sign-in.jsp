@@ -52,6 +52,21 @@
           font-size: 12px;
       }
     </style>
+    <script>
+        function checkName(){
+            var checkValue =document.getElementById('name').value;
+            console.log(checkValue);
+            if(checkValue !== ""){
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("GET", "http://localhost:8080/xworkz_commonmodule_keerthisr/checkValue/"+checkValue);
+                xhttp.send();
+                xhttp.onload = function(){
+                      console.log(this.responseText)
+                      document.getElementById("nameError").innerHTML = this.responseText;
+                }
+            }
+        }
+    </script>
 </head>
 <body>
 
@@ -95,7 +110,8 @@
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" class="form-control" value="${name}" required>
+                    <input type="text" id="name" name="name" class="form-control" value="${name}" onchange="checkName()" required>
+                    <span id = "nameError" style = "color: red"></span>
                     <c:if test="${not empty nameError}">
                         <p class="error-message">${nameError}</p>
                     </c:if>
