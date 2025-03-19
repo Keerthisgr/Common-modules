@@ -21,4 +21,7 @@ public interface UserService {
     boolean existsByName(String name);
 
 
+    long getCountByEmail(String email);
+
+    long getCountByPhoneNumber(String phoneNumber);
 }

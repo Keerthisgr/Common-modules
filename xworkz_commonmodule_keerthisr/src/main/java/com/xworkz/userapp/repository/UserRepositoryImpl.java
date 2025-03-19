@@ -4,10 +4,7 @@ import com.xworkz.userapp.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.Query;
+import javax.persistence.*;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 
@@ -230,5 +227,50 @@ public class UserRepositoryImpl implements UserRepository{
             entityManager.close();
         }
     }
+
+    @Override
+    public long getCountOfEmail(String email) {
+
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction entityTransaction = entityManager.getTransaction();
+        long count = 0L;
+
+        try {
+            Query query = entityManager.createNamedQuery("getEmailCount"); // Make sure the named query exists
+            query.setParameter("setEmail", email);
+            count = (long) query.getSingleResult();
+            return count;
+        } catch (Exception e) {
+            if (entityTransaction.isActive()) {
+                entityTransaction.rollback();
+            }
+            e.printStackTrace();
+            return 0;
+        } finally {
+            entityManager.close();
+        }
+    }
+
+    @Override
+    public long getCountOfPhoneNumber(String phoneNumber) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction entityTransaction = entityManager.getTransaction();
+        long count = 0L;
+
+        try {
+            Query query = entityManager.createNamedQuery("getPhoneNumberCount"); // Ensure this named query exists
+            query.setParameter("setPhoneNumber", phoneNumber);
+            count = (long) query.getSingleResult();
+            return count;
+        } catch (Exception e) {
+            if (entityTransaction.isActive()) {
+                entityTransaction.rollback();
+            }
+            e.printStackTrace();
+            return 0;
+        } finally {
+            entityManager.close();
+}
+}
 
 }

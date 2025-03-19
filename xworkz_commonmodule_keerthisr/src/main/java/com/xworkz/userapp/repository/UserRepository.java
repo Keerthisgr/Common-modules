@@ -19,4 +19,8 @@ public interface UserRepository {
     boolean existsByName(String name);
     boolean existsByEmail(String email);
     boolean deleteByEmail(String email);
+
+    long getCountOfEmail(String email);
+
+    long getCountOfPhoneNumber(String phoneNumber);
 }

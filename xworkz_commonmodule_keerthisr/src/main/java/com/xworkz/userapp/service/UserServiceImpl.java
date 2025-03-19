@@ -369,6 +369,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public long getCountByEmail(String email) {
+        long count = repository.getCountOfEmail(email);
+        log.info("Count: "+count);
+        return count;
+    }
+
+    @Override
+    public long getCountByPhoneNumber(String phoneNumber) {
+        long count = repository.getCountOfPhoneNumber(phoneNumber);
+        log.info("Count: "+count);
+        return count;
+    }
+
+
+    @Override
     public boolean deleteUserByEmail(String email, Model model) {
         UserEntity userEntity = repository.findByEmail(email);
         if (userEntity == null) {

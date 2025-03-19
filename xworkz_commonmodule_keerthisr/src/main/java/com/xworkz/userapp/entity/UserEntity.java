@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 @Table(name = "user_info")
 @NamedQuery(name = "UserEntity.updateFailedAttempts", query = "UPDATE UserEntity u SET u.failedAttempts = :attempts WHERE u.email = :email")
 @NamedQuery(name = "getPasswordByEmail", query = "SELECT entity FROM UserEntity entity WHERE entity.email = :email")
+@NamedQuery(name = "getEmailCount", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.email = :setEmail")
+@NamedQuery(name = "getPhoneNumberCount", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.phoneNumber = :setPhoneNumber")
 @NamedQuery(name = "UserEntity.updateByEmail", query = "UPDATE UserEntity u SET u.name = :name, u.phoneNumber = :phoneNumber, u.location = :location, u.age = :age, u.password = :password WHERE u.email = :email")
 public class UserEntity {
     @Id

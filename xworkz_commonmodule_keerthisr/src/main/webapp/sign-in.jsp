@@ -66,6 +66,65 @@
                 }
             }
         }
+        function checkEmail() {
+                    var checkValue = document.getElementById('email').value.trim();
+                    console.log(checkValue);
+
+                    const emailRegex = /^[a-zA-Z0-9._]+@gmail\.com$/; // Only allows @gmail.com emails
+                    const emailErrorElement = document.getElementById("emailError");
+
+                    if (!emailRegex.test(checkValue)) {
+                        emailErrorElement.innerHTML = "Invalid Email: Email format like (e.g., example@gmail.com) are allowed.";
+                        emailErrorElement.style.display = "block";
+                        return;
+                    } else {
+                        emailErrorElement.style.display = "none";
+                    }
+
+                    const xhttp = new XMLHttpRequest();
+                    xhttp.open("GET", "http://localhost:8080/xworkz_commonmodule_keerthisr/email/" + encodeURIComponent(checkValue));
+                    xhttp.send();
+
+                    xhttp.onload = function () {
+                        emailErrorElement.innerHTML = this.responseText;
+                        emailErrorElement.style.display = this.responseText ? "block" : "none";
+                    };
+                }
+                document.getElementById("email").addEventListener("input", function () {
+                    const emailErrorElement = document.getElementById("emailError");
+                    emailErrorElement.style.display = /^[a-zA-Z0-9._]+@gmail\.com$/.test(this.value.trim()) ? "none" : "block";
+                });
+
+        function checkPhoneNumber() {
+            var checkValue = document.getElementById('phoneNumber').value.trim();
+            console.log(checkValue);
+
+            const phoneRegex = /^[6-9]\d{9}$/; // Ensures 10 digits starting with 6, 7, 8, or 9
+            const phoneErrorElement = document.getElementById("phoneError");
+
+            if (!phoneRegex.test(checkValue)) {
+                phoneErrorElement.innerHTML = "Invalid Phone Number: Must be 10 digits & start with 6-9.";
+                phoneErrorElement.style.display = "block";
+                return;
+            } else {
+                phoneErrorElement.style.display = "none";
+            }
+
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "http://localhost:8080/xworkz_commonmodule_keerthisr/phone/" + encodeURIComponent(checkValue));
+            xhttp.send();
+
+            xhttp.onload = function () {
+                phoneErrorElement.innerHTML = this.responseText;
+                phoneErrorElement.style.display = this.responseText ? "block" : "none";
+            };
+        }
+
+            document.getElementById("phoneNumber").addEventListener("input", function () {
+                const phoneErrorElement = document.getElementById("phoneError");
+                phoneErrorElement.style.display = /^[6-9]\d{9}$/.test(this.value.trim()) ? "none" : "block";
+        });
+
     </script>
 </head>
 <body>
@@ -119,7 +178,8 @@
 
                 <div class="col-md-6 form-group">
                     <label for="email">Email:</label>
-                    <input type="text" id="email" name="email" class="form-control" value="${email}" required>
+                    <input type="text" id="email" name="email" class="form-control" value="${email}" onchange="checkEmail()" required>
+                    <span id = "emailError" style = "color: red"></span>
                     <c:if test="${not empty emailError}">
                         <p class="error-message">${emailError}</p>
                     </c:if>
@@ -129,7 +189,8 @@
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label for="phoneNumber">Phone Number:</label>
-                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="${phoneNumber}" required>
+                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="${phoneNumber}" onchange="checkPhoneNumber()" required>
+                    <span id = "phoneError" style = "color: red"></span>
                     <c:if test="${not empty phoneError}">
                         <p class="error-message">${phoneError}</p>
                     </c:if>
